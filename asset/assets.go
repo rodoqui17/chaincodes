@@ -34,10 +34,16 @@ func (t *AssetsChaincode) newAssetName(assetName string, stub shim.ChaincodeStub
 
 // createAsset creates an asset on the ledger
 func (t *AssetsChaincode) createAsset(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	if len(args) != 2 {
+		return nil, errors.New("invalid number of arguments. Expect asset name and asset data")
+	}
+
 	err := stub.PutState(t.newAssetName(args[0], stub), []byte(args[1]))
 	if err != nil {
 		return nil, errors.New("Failed to create asset -> " + args[0])
 	}
+
 	return nil, nil
 }
 
@@ -51,25 +57,30 @@ func (t *AssetsChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.Init(stub, "init", args)
 
 	case "create":
-		if len(args) != 2 {
-			return nil, errors.New("invalid number of arguments. Expect asset name and asset data")
-		}
 		return t.createAsset(stub, args)
 	}
 
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
 
+// Get an asset by it's name
+func (t *AssetsChaincode) getAsset(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	if len(args) != 1 {
+		return nil, errors.New("invalid number of arguments. Expect asset name")
+	}
+	return stub.GetState(args[0])
+}
+
 // Query is our entry point for queries
 func (t *AssetsChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
 
-	// Handle different functions
-	if function == "read" {
-
+	switch function {
+	case "asset":
+		return t.getAsset(stub, args)
+	default:
+		fmt.Println("query did not find func: " + function)
 	}
-
-	fmt.Println("query did not find func: " + function) //error
 
 	return nil, errors.New("Received unknown function query: " + function)
 }
