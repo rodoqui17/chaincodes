@@ -68,7 +68,11 @@ func (t *AssetsChaincode) getAsset(stub shim.ChaincodeStubInterface, args []stri
 	if len(args) != 1 {
 		return nil, errors.New("invalid number of arguments. Expect asset name")
 	}
-	return stub.GetState(args[0])
+	assetDataBytes, err := stub.GetState(args[0])
+	if err == nil && len(assetDataBytes) == 0 {
+		return nil, errors.New("asset not found")
+	}
+	return assetDataBytes, err
 }
 
 // Query is our entry point for queries
@@ -78,14 +82,10 @@ func (t *AssetsChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	switch function {
 
 	case "asset":
-		assetDataBytes, err := t.getAsset(stub, args)
-		if err != nil && len(assetDataBytes) == 0 {
-			return nil, errors.New("asset not found")
-		}
-		return assetDataBytes, err
+		return t.getAsset(stub, args)
 
 	default:
-		fmt.Println("query did not find func: " + function)
+		fmt.Println("unhandled query func: " + function)
 	}
 
 	return nil, errors.New("Received unknown function query: " + function)
