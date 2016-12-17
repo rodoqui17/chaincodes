@@ -76,10 +76,14 @@ func (t *AssetsChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	fmt.Println("query is running " + function)
 
 	switch function {
+
 	case "asset":
 		assetDataBytes, err := t.getAsset(stub, args)
-		fmt.Println(assetDataBytes, string(assetDataBytes), err)
+		if err != nil && len(assetDataBytes) == 0 {
+			return nil, errors.New("asset not found")
+		}
 		return assetDataBytes, err
+
 	default:
 		fmt.Println("query did not find func: " + function)
 	}
