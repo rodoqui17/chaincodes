@@ -54,22 +54,47 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	if function == "init" { //initialize the chaincode state, used as reset
 		return t.Init(stub, "init", args)
 	}
-	
+
 	if function == "write" {
 		return t.write(stub, args)
 	}
-	
-	fmt.Println(">>> ", function, function == "write")
-	fmt.Println("invoke did not find func: " + function) //error
+
+	if function == "create-table" {
+		err := t.createUserTable(stub, args)
+		if err != nil {
+			fmt.Println("Failed to create table")
+			return nil, errors.New("Failed to create table")
+		}
+		fmt.Println("Successfully created user table")
+		return []byte("successfully created"), nil
+	}
 
 	return nil, errors.New("Received unknown function invocation: " + function)
+}
+
+func (t *SimpleChaincode) createUserTable(stub shim.ChaincodeStubInterface, args []string) error {
+
+	// Define table column
+	var userTableColumnDefs []*shim.ColumnDefinition
+	nameColumnDef := shim.ColumnDefinition{Name: "name", Type: shim.ColumnDefinition_STRING, Key: true}
+	ageColumnDef := shim.ColumnDefinition{Name: "age", Type: shim.ColumnDefinition_INT32, Key: false}
+	genderColumnDef := shim.ColumnDefinition{Name: "gender", Type: shim.ColumnDefinition_INT32, Key: false}
+	userTableColumnDefs = append(userTableColumnDefs, &nameColumnDef)
+	userTableColumnDefs = append(userTableColumnDefs, &ageColumnDef)
+	userTableColumnDefs = append(userTableColumnDefs, &genderColumnDef)
+
+	// create table
+	err := stub.CreateTable("user", userTableColumnDefs)
+
+	return err
 }
 
 func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var name, value string
 	var err error
 	fmt.Println("running write()")
-	fmt.Println("Tx ID: ", stub.GetTxID())
+
+	// tbl, _ := stub.GetTable("")
 
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2. name of variable and value to set")
@@ -112,6 +137,6 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
 		return nil, errors.New(jsonResp)
 	}
-	
+
 	return valAsBytes, nil
 }
