@@ -39,12 +39,13 @@ func (t *AssetsChaincode) createAsset(stub shim.ChaincodeStubInterface, args []s
 		return nil, errors.New("invalid number of arguments. Expect asset name and asset data")
 	}
 
-	err := stub.PutState(t.newAssetName(args[0], stub), []byte(args[1]))
+	assetName := t.newAssetName(args[0], stub)
+	err := stub.PutState(assetName, []byte(args[1]))
 	if err != nil {
 		return nil, errors.New("Failed to create asset -> " + args[0])
 	}
 
-	return nil, nil
+	return []byte(assetName), nil
 }
 
 // Invoke is our entry point to invoke a chaincode function
