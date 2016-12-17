@@ -62,7 +62,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	if function == "create-table" {
 		err := t.createUserTable(stub, args)
 		if err != nil {
-			fmt.Println("Failed to create table")
+			fmt.Println("Failed to create table -> ", err.Error())
 			return nil, errors.New("Failed to create table")
 		}
 		fmt.Println("Successfully created user table")
